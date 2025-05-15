@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake Wikipédia Mobile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon192.png">
+  <style>
+    html, body {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: 100vh;
+      background: #fff;
+
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100vh;
+      overflow: hidden;
+      background: white;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .header-img {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 99;
+    }
+    .footer-img {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 99;
+      background: transparent !important;
+    }
+    .header-container {
+      position: relative;
+      height: auto;
+    }
+    .search-zone {
+      position: absolute;
+      top: 16px;
+      left: 60px;
+      width: 70%;
+      height: 34px;
+      z-index: 100;
+      display: none;
+    }
+    .search-zone input {
+      width: 100%;
+      height: 100%;
+      font-size: 16px;
+      border: none;
+      background: transparent;
+      color: black;
+      caret-color: black;
+      outline: none;
+      box-shadow: none;
+    }
+    #content {
+      position: absolute;
+      top: 100px;
+      bottom: 34px;
+      left: 0;
+      right: 0;
+      z-index: 1;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  </style>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <img id="header" src="header_step1.jpg" class="header-img" alt="Header Wikipédia">
+
+  <div class="search-zone" id="searchZone">
+    <input type="text" id="searchInput" autofocus>
+  </div>
+
+  <iframe id="wikiFrame" src="https://fr.m.wikipedia.org"></iframe>
+
+  <img src="footer.jpg" class="footer-img" alt="Barre Safari">
+
+  <script>
+    const header = document.getElementById("header");
+    const searchZone = document.getElementById("searchZone");
+    const input = document.getElementById("searchInput");
+    const frame = document.getElementById("wikiFrame");
+
+    header.addEventListener("click", () => {
+      header.src = "header_step2.jpg";
+      searchZone.style.display = "block";
+      input.focus();
+    }, { once: true });
+
+    input.addEventListener("focus", () => {
+      header.src = "header_step3.jpg";
+    });
+
+    let timeout;
+    input.addEventListener("input", () => {
+      clearTimeout(timeout);
+      const val = input.value.trim();
+      if (val) {
+        timeout = setTimeout(() => {
+          const searchUrl = "https://fr.m.wikipedia.org/wiki/" + encodeURIComponent(val.replace(/\s+/g, "_"));
+          frame.src = searchUrl;
+        }, 400);
+      }
+    });
+  </script>
+
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAO0LdsUQ05XRz3wLyTI6VD4r73qHKd1lU",
+    authDomain: "mozzduo-f4988.firebaseapp.com",
+    projectId: "mozzduo-f4988",
+    storageBucket: "mozzduo-f4988.appspot.com",
+    messagingSenderId: "907165414498",
+    appId: "1:907165414498:web:950a1962b3bad8c7e14d3b"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let lastSearch = "";
+  let redirectionArmed = false;
+
+  input.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      const value = input.value.trim();
+      if (value) {
+        lastSearch = value;
+        await db.collection("searches").doc("last").set({
+          text: value,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        redirectionArmed = true;
+      }
+    }
+  });
+
+  document.addEventListener("click", () => {
+    if (redirectionArmed && lastSearch) {
+      const finalUrl = "https://fr.m.wikipedia.org/wiki/" + encodeURIComponent(lastSearch.replace(/\s+/g, "_"));
+      window.location.href = finalUrl;
+    }
+  });
+</script>
+</body>
+</html>
