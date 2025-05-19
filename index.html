@@ -9,16 +9,10 @@
   <link rel="apple-touch-icon" href="icon192.png">
   <style>
     html, body {
-      padding: 0 !important;
       margin: 0 !important;
+      padding: 0 !important;
       height: 100vh;
       background: #fff;
-
-      margin: 0 !important;
-      padding: 0 !important;
-      height: 100vh;
-      overflow: hidden;
-      background: white;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .header-img {
@@ -61,11 +55,12 @@
       box-shadow: none;
     }
     #content {
-      position: absolute;
-      top: 100px;
-      bottom: 34px;
+      position: fixed;
+      top: 56px;
+      bottom: 32px;
       left: 0;
       right: 0;
+      width: 100vw;
       z-index: 1;
     }
     iframe {
@@ -73,12 +68,8 @@
       height: 100%;
       border: none;
     }
-  body {
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
   </style>
-
+  <!-- Firestore -->
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 </head>
@@ -90,11 +81,47 @@
     <input type="text" id="searchInput" autofocus>
   </div>
 
-  <iframe id="wikiFrame" src="https://fr.m.wikipedia.org"></iframe>
+  <div id="content">
+    <iframe id="wikiFrame" src="https://fr.m.wikipedia.org"></iframe>
+  </div>
 
-  <img src="footer.jpg" class="footer-img" alt="Barre Safari">
+  <img src="footer.jpg" class="footer-img" id="footer-fake" alt="Barre Safari">
 
   <script>
+    // Firestore config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAO0LdsUQ05XRz3wLyTI6VD4r73qHKd1lU",
+      authDomain: "mozzduo-f4988.firebaseapp.com",
+      projectId: "mozzduo-f4988",
+      storageBucket: "mozzduo-f4988.appspot.com",
+      messagingSenderId: "907165414498",
+      appId: "1:907165414498:web:950a1962b3bad8c7e14d3b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // --- FAUX BANDEAU BAS : MASQUER SI PAS EN PLEIN ÉCRAN ---
+    function isFullScreen() {
+      return (
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.navigator.standalone === true ||
+        document.fullscreenElement
+      );
+    }
+    function updateFooterDisplay() {
+      const footer = document.getElementById('footer-fake');
+      if (!footer) return;
+      if (isFullScreen()) {
+        footer.style.display = '';
+      } else {
+        footer.style.display = 'none';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', updateFooterDisplay);
+    window.addEventListener('resize', updateFooterDisplay);
+    document.addEventListener('fullscreenchange', updateFooterDisplay);
+
+    // --- LOGIQUE D'INTERFACE WIKIPEDIA ---
     const header = document.getElementById("header");
     const searchZone = document.getElementById("searchZone");
     const input = document.getElementById("searchInput");
@@ -121,44 +148,51 @@
         }, 400);
       }
     });
-  </script>
 
+    // --- ENREGISTREMENT FIRESTORE (Return ou après 4s d'inactivité) ---
+    let lastSearch = "";
+    let redirectionArmed = false;
+    let searchTimeout = null;
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAO0LdsUQ05XRz3wLyTI6VD4r73qHKd1lU",
-    authDomain: "mozzduo-f4988.firebaseapp.com",
-    projectId: "mozzduo-f4988",
-    storageBucket: "mozzduo-f4988.appspot.com",
-    messagingSenderId: "907165414498",
-    appId: "1:907165414498:web:950a1962b3bad8c7e14d3b"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    async function saveSearch(val) {
+      if (!val || val === lastSearch) return;
+      lastSearch = val;
+      await db.collection("searches").doc("last").set({
+        text: val,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      redirectionArmed = true;
+    }
 
-  let lastSearch = "";
-  let redirectionArmed = false;
-
-  input.addEventListener("keydown", async (e) => {
-    if (e.key === "Enter") {
-      const value = input.value.trim();
-      if (value) {
-        lastSearch = value;
-        await db.collection("searches").doc("last").set({
-          text: value,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        redirectionArmed = true;
+    input.addEventListener("keydown", async (e) => {
+      if (e.key === "Enter") {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        const value = input.value.trim();
+        if (value) {
+          await saveSearch(value);
+        }
       }
-    }
-  });
+    });
 
-  document.addEventListener("click", () => {
-    if (redirectionArmed && lastSearch) {
-      const finalUrl = "https://fr.m.wikipedia.org/wiki/" + encodeURIComponent(lastSearch.replace(/\s+/g, "_"));
-      window.location.href = finalUrl;
-    }
-  });
-</script>
+    input.addEventListener("input", () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      const val = input.value.trim();
+
+      // Enregistre après 4s d’inactivité
+      searchTimeout = setTimeout(async () => {
+        if (val) {
+          await saveSearch(val);
+        }
+      }, 4000);
+    });
+
+    // --- REDIRECTION au clic sur l'écran ---
+    document.addEventListener("click", () => {
+      if (redirectionArmed && lastSearch) {
+        const finalUrl = "https://fr.m.wikipedia.org/wiki/" + encodeURIComponent(lastSearch.replace(/\s+/g, "_"));
+        window.location.href = finalUrl;
+      }
+    });
+  </script>
 </body>
 </html>
