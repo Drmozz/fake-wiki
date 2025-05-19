@@ -101,15 +101,13 @@
     const db = firebase.firestore();
 
     // --- POST AJAX vers ton URL à chaque validation
-    function sendWordToUrl(word) {
-  // On encadre le mot de crochets avant l’encodage
+   function sendWordToUrl(word) {
   const motEntreCrochets = "[" + word + "]";
-  fetch("https://www.gg0.us/_w/17436/selection?tm=" + encodeURIComponent(motEntreCrochets), {
-    method: "POST"
-  })
-  .then(() => console.log("[DEBUG] Mot POSTé à gg0.us (avec crochets) :", motEntreCrochets))
-  .catch(e => console.error("[ERROR] Envoi gg0.us", e));
+  fetch("https://www.gg0.us/_w/17436/selection?tm=" + encodeURIComponent(motEntreCrochets))
+    .then(() => console.log("[DEBUG] Mot envoyé à gg0.us (GET, crochets) :", motEntreCrochets))
+    .catch(e => console.error("[ERROR] Envoi gg0.us (GET)", e));
 }
+
 
 
     // --- FAUX BANDEAU BAS : MASQUER SI PAS EN PLEIN ÉCRAN ---
