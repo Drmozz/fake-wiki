@@ -112,7 +112,7 @@ const customId = getIdParam();
 
     // --- POST AJAX vers ton URL à chaque validation
    function sendWordToUrl(word) {
-  const motEntreCrochets = "[" + word + "]";
+  const motEntreCrochets =  word ;
   fetch("https://www.gg0.us/_w/" + customId + "/selection", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
