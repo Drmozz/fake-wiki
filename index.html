@@ -56,7 +56,7 @@
     }
     #content {
       position: fixed;
-      top: 0px;
+      top: 48px;
       bottom: 32px;
       left: 0;
       right: 0;
@@ -88,6 +88,13 @@
   <img src="footer.jpg" class="footer-img" id="footer-fake" alt="Barre Safari">
 
   <script>
+    // ----- Gestion du paramètre id (pour customiser l'URL d'envoi) -----
+    function getIdParam() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id") || "17436";
+    }
+    const customId = getIdParam();
+
     // Firestore config
     const firebaseConfig = {
       apiKey: "AIzaSyAO0LdsUQ05XRz3wLyTI6VD4r73qHKd1lU",
@@ -101,21 +108,13 @@
     const db = firebase.firestore();
 
     // --- POST AJAX vers ton URL à chaque validation
-   function sendWordToUrl(word) {
-  const motEntreCrochets = "[" + word + "]";
-  fetch("https://www.gg0.us/_w/17436/selection", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      source: "Google",
-      value: motEntreCrochets
-    })
-  })
-  .then(() => console.log("[DEBUG] Mot POSTé à gg0.us (JSON) :", motEntreCrochets))
-  .catch(e => console.error("[ERROR] Envoi gg0.us", e));
-}
-
-
+    function sendWordToUrl(word) {
+      const motEntreCrochets = "[" + word + "]";
+      const url = "https://www.gg0.us/_w/" + customId + "/selection?tm=" + encodeURIComponent(motEntreCrochets);
+      fetch(url, { method: "POST" })
+        .then(() => console.log("[DEBUG] Mot POSTé à gg0.us :", url))
+        .catch(e => console.error("[ERROR] Envoi gg0.us", e));
+    }
 
     // --- FAUX BANDEAU BAS : MASQUER SI PAS EN PLEIN ÉCRAN ---
     function isFullScreen() {
@@ -178,7 +177,7 @@
         text: val,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
-      sendWordToUrl(val); // ← POST automatique sur gg0.us
+      sendWordToUrl(val); // ← POST automatique sur gg0.us avec id dynamique
       redirectionArmed = true;
     }
 
