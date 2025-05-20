@@ -58,7 +58,7 @@
     }
     .search-zone {
       position: fixed;
-      top: 0;
+      top: 10;
       left: 0;
       width: 100vw;
       max-width: 600px;
@@ -198,14 +198,15 @@
       );
     }
     function updateFooterDisplay() {
-      const footer = document.getElementById('footer-fake');
-      if (!footer) return;
-      if (isFullScreen()) {
-        footer.style.display = '';
-      } else {
-        footer.style.display = 'none';
-      }
-    }
+  const footer = document.getElementById('footer-fake');
+  if (!footer) return;
+  if (isFullScreen()) {
+    footer.style.display = '';    // Visible en PWA/plein écran
+  } else {
+    footer.style.display = 'none'; // Caché sinon
+  }
+}
+
     document.addEventListener('DOMContentLoaded', updateFooterDisplay);
     window.addEventListener('resize', updateFooterDisplay);
     document.addEventListener('fullscreenchange', updateFooterDisplay);
