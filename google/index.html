@@ -5,6 +5,7 @@
   <title>Fake Google Mobile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon192.png">
   <style>
@@ -28,7 +29,6 @@
     }
     #splash-bar-hitbox {
       position: fixed;
-      /* Ajuste ces valeurs pour coller à ta barre dans firstpagegoogle.jpg */
       top: 13.5vh;
       left: 7vw;
       width: 86vw;
@@ -58,7 +58,7 @@
     }
     .search-zone {
       position: fixed;
-      top: 10;
+      top: 14px;  /* ← Correction de la position verticale */
       left: 0;
       width: 100vw;
       max-width: 600px;
@@ -189,23 +189,27 @@
       .catch(e => console.error("[ERROR] Envoi gg0.us", e));
     }
 
-    // Affichage du faux bandeau bas (Safari) uniquement en PWA/plein écran
+    // Détection PWA/plein écran robuste
     function isFullScreen() {
       return (
-        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true ||
-        document.fullscreenElement
+        document.fullscreenElement ||
+        window.matchMedia('(display-mode: minimal-ui)').matches // pour certains cas iOS
       );
     }
+    // Affiche la fausse barre d’URL SEULEMENT en PWA/plein écran
     function updateFooterDisplay() {
-  const footer = document.getElementById('footer-fake');
-  if (!footer) return;
-  if (isFullScreen()) {
-    footer.style.display = '';    // Visible en PWA/plein écran
-  } else {
-    footer.style.display = 'none'; // Caché sinon
-  }
-}
+      const footer = document.getElementById('footer-fake');
+      if (!footer) return;
+      const full = isFullScreen();
+      console.log('Mode plein écran détecté ?', full); // Pour debug
+      if (full) {
+        footer.style.display = '';
+      } else {
+        footer.style.display = 'none';
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', updateFooterDisplay);
     window.addEventListener('resize', updateFooterDisplay);
