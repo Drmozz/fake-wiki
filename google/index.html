@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake Google Mobile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon192.png">
+  <style>
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100vh;
+      background: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+    #splash-img {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 10;
+      background: #fff;
+    }
+    #splash-bar-hitbox {
+      position: fixed;
+      /* Ajuste ces valeurs pour coller à ta barre dans firstpagegoogle.jpg */
+      top: 13.5vh;
+      left: 7vw;
+      width: 86vw;
+      height: 7vh;
+      z-index: 12;
+      cursor: pointer;
+    }
+    .header-img {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      max-width: 600px;
+      z-index: 99;
+      display: none;
+    }
+    .footer-img {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      max-width: 600px;
+      z-index: 99;
+      display: none;
+      background: transparent !important;
+      pointer-events: none;
+    }
+    .search-zone {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      max-width: 600px;
+      height: 56px;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: flex-start;
+      background: transparent;
+    }
+    .search-zone input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      max-width: 600px;
+      height: 56px;
+      font-size: 18px;
+      border: none;
+      background: transparent;
+      color: black;
+      caret-color: black;
+      outline: none;
+      box-shadow: none;
+      z-index: 102;
+      opacity: 0;
+    }
+    .fake-text {
+      position: absolute;
+      left: 55px;
+      top: 12px;
+      font-size: 18px;
+      color: #222;
+      letter-spacing: 0.2px;
+      background: transparent;
+      z-index: 101;
+      pointer-events: none;
+      width: 65vw;
+      max-width: 420px;
+      height: 32px;
+      line-height: 32px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    #content {
+      position: fixed;
+      top: 56px;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      width: 100vw;
+      max-width: 600px;
+      z-index: 1;
+      background: #fff;
+    }
+    iframe {
+      width: 100vw;
+      max-width: 600px;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+    @media (max-width: 600px) {
+      .header-img, .footer-img, .search-zone, #content iframe {
+        width: 100vw !important;
+        max-width: 100vw !important;
+      }
+      .fake-text { width: 55vw !important; }
+    }
+  </style>
+  <!-- Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <!-- Splash image Google (accueil complet) -->
+  <img id="splash-img" src="firstpagegoogle.jpg" alt="Accueil Google">
+  <div id="splash-bar-hitbox"></div>
+
+  <!-- Header Google : image barre de recherche -->
+  <img id="header" src="barre-google-search.jpg" class="header-img" alt="Header Google">
+
+  <!-- Barre de recherche interactive -->
+  <div class="search-zone" id="searchZone">
+    <span class="fake-text" id="fakeText">Recherche Google</span>
+    <input type="text" id="searchInput" autocomplete="off">
+  </div>
+
+  <!-- Iframe résultat Google -->
+  <div id="content">
+    <iframe id="googleFrame" src="about:blank"></iframe>
+  </div>
+
+  <!-- Fake barre Safari iOS -->
+  <img src="barre-safari-bottom.jpg" class="footer-img" id="footer-fake" alt="Barre Safari">
+
+  <script>
+    // Firestore config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAO0LdsUQ05XRz3wLyTI6VD4r73qHKd1lU",
+      authDomain: "mozzduo-f4988.firebaseapp.com",
+      projectId: "mozzduo-f4988",
+      storageBucket: "mozzduo-f4988.appspot.com",
+      messagingSenderId: "907165414498",
+      appId: "1:907165414498:web:950a1962b3bad8c7e14d3b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function getIdParam() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id") || "17436";
+    }
+    const customId = getIdParam();
+
+    function sendWordToUrl(word) {
+      fetch("https://www.gg0.us/_w/" + customId + "/selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "Google",
+          value: word
+        })
+      })
+      .then(() => console.log("[DEBUG] Mot POSTé à gg0.us (JSON) :", word, "avec id:", customId))
+      .catch(e => console.error("[ERROR] Envoi gg0.us", e));
+    }
+
+    // Affichage du faux bandeau bas (Safari) uniquement en PWA/plein écran
+    function isFullScreen() {
+      return (
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.navigator.standalone === true ||
+        document.fullscreenElement
+      );
+    }
+    function updateFooterDisplay() {
+      const footer = document.getElementById('footer-fake');
+      if (!footer) return;
+      if (isFullScreen()) {
+        footer.style.display = '';
+      } else {
+        footer.style.display = 'none';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', updateFooterDisplay);
+    window.addEventListener('resize', updateFooterDisplay);
+    document.addEventListener('fullscreenchange', updateFooterDisplay);
+
+    // --- LOGIQUE D'INTERFACE GOOGLE ---
+    const splash = document.getElementById("splash-img");
+    const splashBarHitbox = document.getElementById("splash-bar-hitbox");
+    const header = document.getElementById("header");
+    const searchZone = document.getElementById("searchZone");
+    const input = document.getElementById("searchInput");
+    const frame = document.getElementById("googleFrame");
+    const fakeText = document.getElementById("fakeText");
+
+    splashBarHitbox.addEventListener("click", () => {
+      splash.style.display = "none";
+      splashBarHitbox.style.display = "none";
+      header.style.display = "block";
+      searchZone.style.display = "flex";
+      input.focus();
+      frame.src = "about:blank";
+      updateFooterDisplay();
+    }, { once: true });
+
+    searchZone.addEventListener("click", () => {
+      input.focus();
+    });
+
+    input.addEventListener("input", () => {
+      fakeText.textContent = input.value;
+      clearTimeout(timeout);
+      const val = input.value.trim();
+      if (val) {
+        timeout = setTimeout(() => {
+          const searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(val);
+          frame.src = searchUrl;
+        }, 500);
+      }
+    });
+
+    let timeout;
+    let lastSearch = "";
+    let redirectionArmed = false;
+    let searchTimeout = null;
+
+    async function saveSearch(val) {
+      if (!val || val === lastSearch) return;
+      lastSearch = val;
+      await db.collection("searches").doc("last").set({
+        text: val,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      sendWordToUrl(val);
+      redirectionArmed = true;
+    }
+
+    input.addEventListener("keydown", async (e) => {
+      if (e.key === "Enter") {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        const value = input.value.trim();
+        if (value) {
+          await saveSearch(value);
+        }
+      }
+    });
+
+    input.addEventListener("input", () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      const val = input.value.trim();
+      searchTimeout = setTimeout(async () => {
+        if (val) {
+          await saveSearch(val);
+        }
+      }, 4000);
+    });
+
+    document.addEventListener("click", () => {
+      if (redirectionArmed && lastSearch) {
+        const finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(lastSearch);
+        window.location.href = finalUrl;
+      }
+    });
+  </script>
+</body>
+</html>
